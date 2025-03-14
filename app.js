@@ -36,7 +36,7 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(cors({ origin: /http:\/\/localhost/ }));
+app.use(cors({ origin: 'https://salmon-water-07138e20f.azurestaticapps.net' }));
 app.options('*', cors());
 
 const dados = {
