@@ -10,6 +10,8 @@ import { type } from 'os';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const BASE_DIR = path.join(process.env.HOME || "D:\\home", "site", "wwwroot", "App_Data");
+
 (async () => {
   await main();
 })();
@@ -118,22 +120,24 @@ const DATA_FOLDER = path.join(__dirname, "dadosEsp");
 
 app.get("/api/dados", async (req, res) => {
   try {
-    const files = await fs.readdir(DATA_FOLDER); // Lista arquivos
-    const jsonFiles = files.filter(file => file.endsWith(".json")); // Filtra os JSONs
+    const dir = path.join(BASE_DIR, "dadosEsp");
+    const files = await fs.readdir(dir);
+    const jsonFiles = files.filter(file => file.endsWith(".json"));
 
     const dados34 = await Promise.all(
       jsonFiles.map(async file => {
-        const content = await fs.readFile(path.join(DATA_FOLDER, file), "utf-8");
+        const content = await fs.readFile(path.join(dir, file), "utf-8");
         return JSON.parse(content);
       })
     );
 
-    res.json(dados34); // Retorna os dados corretamente
+    res.json(dados34);
   } catch (err) {
     console.error("Erro ao ler diretório:", err);
     res.status(500).json({ error: "Erro ao ler diretório" });
   }
 });
+
 
 
 
@@ -158,56 +162,57 @@ app.get('/api/mensagem', (req, res) => {
     res.json({ mensagem: 'Olá do backend! 🚀' }); //deixando aqui só para garantir que o back comunica com o front
   });
 
-async function lerDados(dir) {
+async function lerDados() {
   let arquivos = [];
+  const dir = path.join(BASE_DIR, "dadosEsp");
 
-  const itens = await fs.readdir(dir, {withFileTypes: true});
+  try {
+    const itens = await fs.readdir(dir, { withFileTypes: true });
 
-  for (const item of itens) {
-    if (item.isDirectory()){
-      arquivos = arquivos.concat(
-        await lerDados(dir, item.name)
-      );
-    }
-    else{
-      if(path.extname(item.name) === ".json"){
+    for (const item of itens) {
+      if (!item.isDirectory() && path.extname(item.name) === ".json") {
         arquivos.push(path.join(dir, item.name));
       }
     }
+  } catch (err) {
+    console.error("Erro ao acessar diretório de dados:", err);
   }
+
   return arquivos;
 }
 
-async function escreverDados(dir, leituraID, dadosLeitura) {
+
+async function escreverDados(leituraID, dadosLeitura) {
   try {
+    const dir = path.join(BASE_DIR, "dadosEsp"); // Diretório correto
     await fs.mkdir(dir, { recursive: true });
 
     const caminhoReg = path.join(dir, `leitura${leituraID}.json`);
     await fs.writeFile(caminhoReg, JSON.stringify(dadosLeitura, null, 2));
 
-    console.log(`Dados de leitura ${leituraID} salvos.`);
+    console.log(`Dados de leitura ${leituraID} salvos em ${caminhoReg}`);
   } catch (err) {
     console.error("Erro ao salvar dados da leitura:", err);
   }
 }
 
 
-async function escreverUltimaLeitura(){
-  const ultima = path.join(__dirname, "ultimaLeitura");
-  try{
-    await fs.mkdir(ultima, { recursive: true })
-  }
-  catch{
-    console.log("pasta 'ultimaLeitura' já foi criada.");
+async function escreverUltimaLeitura() {
+  const ultima = path.join(BASE_DIR, "ultimaLeitura");
+  try {
+    await fs.mkdir(ultima, { recursive: true });
+  } catch {
+    console.log("Pasta 'ultimaLeitura' já existe.");
   }
   const caminhoLeitura = path.join(ultima, `ultimoID.json`);
   await fs.writeFile(caminhoLeitura, JSON.stringify(leituraG, null, 2));
   console.log(`Último ID (${leituraG}) salvo.`);
 }
 
+
 async function lerUltimaLeitura() {
   try {
-    const caminhoLeitura = path.join(__dirname, "ultimaLeitura/ultimoID.json");
+    const caminhoLeitura = path.join(BASE_DIR, "ultimaLeitura", "ultimoID.json");
     const data = await fs.readFile(caminhoLeitura, "utf-8");
     const ultimoID = JSON.parse(data);
     return ultimoID + 1;
@@ -216,3 +221,4 @@ async function lerUltimaLeitura() {
     return 1;
   }
 }
+
