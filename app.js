@@ -36,7 +36,7 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(cors({ origin: /http:\/\/localhost/ }));
+app.use(cors({ origin: ['https://salmon-water-07138e20f.azurestaticapps.net', 'https://salmon-water-07138e20f.6.azurestaticapps.net'] }));
 app.options('*', cors());
 
 const dados = {
@@ -146,7 +146,7 @@ app.get('/', (req, res) => {
 });
 
 /* app.listen(PORT, () => {
-  console.log(Servidor rodando em http://localhost:${PORT});
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
 }); */
 
 app.listen(8080, "0.0.0.0", () => {
@@ -182,10 +182,10 @@ async function escreverDados(dir, leituraID, dadosLeitura) {
   try {
     await fs.mkdir(dir, { recursive: true });
 
-    const caminhoReg = path.join(dir, leitura${leituraID}.json);
+    const caminhoReg = path.join(dir, `leitura${leituraID}.json`);
     await fs.writeFile(caminhoReg, JSON.stringify(dadosLeitura, null, 2));
 
-    console.log(Dados de leitura ${leituraID} salvos.);
+    console.log(`Dados de leitura ${leituraID} salvos.`);
   } catch (err) {
     console.error("Erro ao salvar dados da leitura:", err);
   }
@@ -200,9 +200,9 @@ async function escreverUltimaLeitura(){
   catch{
     console.log("pasta 'ultimaLeitura' já foi criada.");
   }
-  const caminhoLeitura = path.join(ultima, ultimoID.json);
+  const caminhoLeitura = path.join(ultima, `ultimoID.json`);
   await fs.writeFile(caminhoLeitura, JSON.stringify(leituraG, null, 2));
-  console.log(Último ID (${leituraG}) salvo.);
+  console.log(`Último ID (${leituraG}) salvo.`);
 }
 
 async function lerUltimaLeitura() {
