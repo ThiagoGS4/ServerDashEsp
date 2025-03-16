@@ -10,8 +10,6 @@ import { type } from 'os';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const BASE_DIR = path.join(process.env.HOME || "D:\\home", "site", "wwwroot", "App_Data");
-
 (async () => {
   await main();
 })();
@@ -38,7 +36,7 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(cors({ origin: ['https://salmon-water-07138e20f.azurestaticapps.net', 'https://salmon-water-07138e20f.6.azurestaticapps.net'] }));
+app.use(cors({ origin: /http:\/\/localhost/ }));
 app.options('*', cors());
 
 const dados = {
@@ -105,7 +103,7 @@ router.post("/enviarDados", async (req, res) => {
     data: dataHora
   };
 
-  await escreverDados(leituraG, armDados);
+  await escreverDados("dadosEsp", leituraG, armDados); // Passando os parâmetros certos
   await escreverUltimaLeitura(); // Salva o último ID usado
 
   dados[novoId] = armDados;
@@ -120,24 +118,22 @@ const DATA_FOLDER = path.join(__dirname, "dadosEsp");
 
 app.get("/api/dados", async (req, res) => {
   try {
-    const dir = path.join(BASE_DIR, "dadosEsp");
-    const files = await fs.readdir(dir);
-    const jsonFiles = files.filter(file => file.endsWith(".json"));
+    const files = await fs.readdir(DATA_FOLDER); // Lista arquivos
+    const jsonFiles = files.filter(file => file.endsWith(".json")); // Filtra os JSONs
 
     const dados34 = await Promise.all(
       jsonFiles.map(async file => {
-        const content = await fs.readFile(path.join(dir, file), "utf-8");
+        const content = await fs.readFile(path.join(DATA_FOLDER, file), "utf-8");
         return JSON.parse(content);
       })
     );
 
-    res.json(dados34);
+    res.json(dados34); // Retorna os dados corretamente
   } catch (err) {
     console.error("Erro ao ler diretório:", err);
     res.status(500).json({ error: "Erro ao ler diretório" });
   }
 });
-
 
 
 
@@ -150,7 +146,7 @@ app.get('/', (req, res) => {
 });
 
 /* app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+  console.log(Servidor rodando em http://localhost:${PORT});
 }); */
 
 app.listen(8080, "0.0.0.0", () => {
@@ -162,57 +158,56 @@ app.get('/api/mensagem', (req, res) => {
     res.json({ mensagem: 'Olá do backend! 🚀' }); //deixando aqui só para garantir que o back comunica com o front
   });
 
-async function lerDados() {
+async function lerDados(dir) {
   let arquivos = [];
-  const dir = path.join(BASE_DIR, "dadosEsp");
 
-  try {
-    const itens = await fs.readdir(dir, { withFileTypes: true });
+  const itens = await fs.readdir(dir, {withFileTypes: true});
 
-    for (const item of itens) {
-      if (!item.isDirectory() && path.extname(item.name) === ".json") {
+  for (const item of itens) {
+    if (item.isDirectory()){
+      arquivos = arquivos.concat(
+        await lerDados(dir, item.name)
+      );
+    }
+    else{
+      if(path.extname(item.name) === ".json"){
         arquivos.push(path.join(dir, item.name));
       }
     }
-  } catch (err) {
-    console.error("Erro ao acessar diretório de dados:", err);
   }
-
   return arquivos;
 }
 
-
-async function escreverDados(leituraID, dadosLeitura) {
+async function escreverDados(dir, leituraID, dadosLeitura) {
   try {
-    const dir = path.join(BASE_DIR, "dadosEsp"); // Diretório correto
     await fs.mkdir(dir, { recursive: true });
 
-    const caminhoReg = path.join(dir, `leitura${leituraID}.json`);
+    const caminhoReg = path.join(dir, leitura${leituraID}.json);
     await fs.writeFile(caminhoReg, JSON.stringify(dadosLeitura, null, 2));
 
-    console.log(`Dados de leitura ${leituraID} salvos em ${caminhoReg}`);
+    console.log(Dados de leitura ${leituraID} salvos.);
   } catch (err) {
     console.error("Erro ao salvar dados da leitura:", err);
   }
 }
 
 
-async function escreverUltimaLeitura() {
-  const ultima = path.join(BASE_DIR, "ultimaLeitura");
-  try {
-    await fs.mkdir(ultima, { recursive: true });
-  } catch {
-    console.log("Pasta 'ultimaLeitura' já existe.");
+async function escreverUltimaLeitura(){
+  const ultima = path.join(__dirname, "ultimaLeitura");
+  try{
+    await fs.mkdir(ultima, { recursive: true })
   }
-  const caminhoLeitura = path.join(ultima, `ultimoID.json`);
+  catch{
+    console.log("pasta 'ultimaLeitura' já foi criada.");
+  }
+  const caminhoLeitura = path.join(ultima, ultimoID.json);
   await fs.writeFile(caminhoLeitura, JSON.stringify(leituraG, null, 2));
-  console.log(`Último ID (${leituraG}) salvo.`);
+  console.log(Último ID (${leituraG}) salvo.);
 }
-
 
 async function lerUltimaLeitura() {
   try {
-    const caminhoLeitura = path.join(BASE_DIR, "ultimaLeitura", "ultimoID.json");
+    const caminhoLeitura = path.join(__dirname, "ultimaLeitura/ultimoID.json");
     const data = await fs.readFile(caminhoLeitura, "utf-8");
     const ultimoID = JSON.parse(data);
     return ultimoID + 1;
@@ -221,4 +216,3 @@ async function lerUltimaLeitura() {
     return 1;
   }
 }
-
