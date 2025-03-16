@@ -149,8 +149,8 @@ app.get('/', (req, res) => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 }); */
 
-app.listen(443, "0.0.0.0", () => {
-  console.log("Servidor rodando na porta 443...");
+app.listen(8080, "0.0.0.0", () => {
+  console.log("Servidor rodando na porta 8080...");
 });
 
 
