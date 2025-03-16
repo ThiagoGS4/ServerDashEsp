@@ -105,7 +105,7 @@ router.post("/enviarDados", async (req, res) => {
     data: dataHora
   };
 
-  await escreverDados("dadosEsp", leituraG, armDados); // Passando os parâmetros certos
+  await escreverDados(leituraG, armDados);
   await escreverUltimaLeitura(); // Salva o último ID usado
 
   dados[novoId] = armDados;
